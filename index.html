@@ -5,27 +5,10 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Power Mart - Premium Shopping</title>
 <style>
-body {
-    margin:0;
-    font-family:Arial, sans-serif;
-    background: linear-gradient(135deg, #d4bfff, #b3dfff, #c2f0f0);
-    min-height:100vh;
-    color:#333;
-}
-header {
-    background: rgba(255,255,255,0.9);
-    color: #333;
-    padding: 15px;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    position:sticky;
-    top:0;
-    z-index:10;
-    border-bottom: 2px solid #a0d4ff;
-}
+body {margin:0;font-family:Arial, sans-serif;background: linear-gradient(135deg, #d4bfff, #b3dfff, #c2f0f0);min-height:100vh;color:#333;}
+header {background: rgba(255,255,255,0.9);color: #333;padding: 15px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10;border-bottom: 2px solid #a0d4ff;}
 header h1 {margin:0;font-size:24px;color:#333;}
-nav a {color:#333;margin:0 10px;text-decoration:none;font-weight:bold;transition:0.3s;cursor:pointer;}
+nav a {color:#333;margin:0 10px;text-decoration:none;font-weight:bold;transition:0.3s;}
 nav a:hover {color:#6ca0ff;}
 .slider {display:flex;overflow-x:auto;scroll-snap-type:x mandatory;background: rgba(255,255,255,0.3);padding:10px;border-radius:15px;margin:15px;}
 .slider img {width:100%;max-width:400px;height:200px;object-fit:cover;margin:5px;border-radius:15px;scroll-snap-align:start;transition: transform .3s;border:3px solid #fff;}
@@ -34,33 +17,12 @@ nav a:hover {color:#6ca0ff;}
 .search-bar input {width:80%;padding:12px;border-radius:10px;border:2px solid #fff;font-size:16px;outline:none;transition:0.3s;}
 .search-bar input:focus {border-color:#6ca0ff;background:rgba(255,255,255,0.8);}
 .products {display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:15px;padding:15px;}
-.product {
-    background:#fff;
-    border-radius:15px;
-    box-shadow:0 8px 20px rgba(0,0,0,0.2);
-    padding:10px;
-    text-align:center;
-    transition: transform .3s, box-shadow .3s;
-    display:flex;
-    flex-direction:column;
-    justify-content:space-between;
-    position:relative;
-    min-height:320px;
-}
+.product {background:#fff;border-radius:15px;box-shadow:0 8px 20px rgba(0,0,0,0.2);padding:10px;text-align:center;transition: transform .3s, box-shadow .3s;display:flex;flex-direction:column;justify-content:space-between;position:relative;min-height:320px;}
 .product:hover {transform:translateY(-5px);box-shadow:0 12px 25px rgba(0,0,0,0.3);}
 .product img {width:100%;height:150px;object-fit:cover;border-radius:12px;}
 .product h3 {color:#333;margin:10px 0 5px 0;}
 .product p {font-weight:bold;color:#111;}
-.product-buttons {
-    display:flex;
-    flex-direction:column;
-    gap:8px;
-    position:absolute;
-    bottom:10px;
-    width:90%;
-    left:50%;
-    transform:translateX(-50%);
-}
+.product-buttons {display:flex;flex-direction:column;gap:8px;position:absolute;bottom:10px;width:90%;left:50%;transform:translateX(-50%);}
 .product-buttons button {width:100%;}
 button {background: linear-gradient(45deg,#a0d4ff,#c2f0f0);color:#333;border:none;padding:10px 15px;margin-top:8px;border-radius:12px;cursor:pointer;font-weight:bold;transition:0.3s;}
 button:hover {background: linear-gradient(45deg,#b3dfff,#d4bfff);color:#333;}
@@ -76,7 +38,8 @@ input:focus, select:focus {border-color:#6ca0ff;}
 .modal-content {background:#fff;margin:10% auto;padding:20px;border-radius:15px;width:90%;max-width:400px;box-shadow:0 10px 25px rgba(0,0,0,0.3);animation:fadeIn 0.5s;}
 .order-product {display:flex;justify-content:space-between;align-items:center;margin:8px 0;}
 .order-product div {display:flex;align-items:center;gap:5px;}
-#loginBtn {background:#ffb6c1;color:#fff;font-weight:bold;}
+#loginContainer {text-align:center;margin:20px;}
+#profileBtn,#logoutBtn{display:none;margin-left:10px;}
 @keyframes fadeIn {from {opacity:0; transform:translateY(-50px);} to {opacity:1; transform:translateY(0);}}
 </style>
 </head>
@@ -85,13 +48,16 @@ input:focus, select:focus {border-color:#6ca0ff;}
 <header>
   <h1>Power Mart</h1>
   <nav>
-    <a onclick="showHome()">Home</a>
-    <a onclick="showCart()">Cart 🛒 (<span id='cartCount'>0</span>)</a>
-    <a id="profileBtn" style="display:none;"></a>
-    <button id="loginBtn" onclick="login()">Login with Google</button>
-    <button id="logoutBtn" style="display:none;" onclick="logout()">Log Out</button>
+    <a href="#" onclick="showHome()">Home</a>
+    <a href="#" onclick="showCart()">Cart 🛒 (<span id='cartCount'>0</span>)</a>
+    <a href="#" id="profileBtn"></a>
+    <button id="logoutBtn" onclick="logout()">Logout</button>
   </nav>
 </header>
+
+<div id="loginContainer">
+  <button onclick="login()">Login with Google</button>
+</div>
 
 <div class="slider">
   <img src="https://via.placeholder.com/400x200?text=New+Collection+1" alt="New1">
@@ -135,10 +101,10 @@ input:focus, select:focus {border-color:#6ca0ff;}
   </div>
 </div>
 
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-firestore-compat.js"></script>
 
 <script>
 const firebaseConfig = {
@@ -153,106 +119,77 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
-let currentUser = null;
 
-auth.onAuthStateChanged(user=>{
-  currentUser = user;
-  if(user){
-    document.getElementById("loginBtn").style.display="none";
-    document.getElementById("logoutBtn").style.display="inline-block";
-    document.getElementById("profileBtn").style.display="inline-block";
-    document.getElementById("profileBtn").innerText=user.displayName;
-    loadCart();
-  } else {
-    document.getElementById("loginBtn").style.display="inline-block";
-    document.getElementById("logoutBtn").style.display="none";
-    document.getElementById("profileBtn").style.display="none";
-    cart = [];
-    updateCartCount();
-  }
-});
+let currentUser=null;
+let cart=[];
 
+// Google Login
 function login(){
   const provider = new firebase.auth.GoogleAuthProvider();
-  auth.signInWithPopup(provider).catch(err=>alert(err.message));
+  auth.signInWithPopup(provider);
 }
+
+// Logout
 function logout(){
   auth.signOut();
 }
 
-const products = [
-  {id:1, name:"Smartphone", price:15000, img:"https://via.placeholder.com/200?text=Smartphone"},
-  {id:2, name:"Headphones", price:2000, img:"https://via.placeholder.com/200?text=Headphones"},
-  {id:3, name:"Shoes", price:3000, img:"https://via.placeholder.com/200?text=Shoes"},
-  {id:4, name:"Watch", price:5000, img:"https://via.placeholder.com/200?text=Watch"},
-];
+// Firebase Auth State
+auth.onAuthStateChanged(user=>{
+  if(user){
+    currentUser = user;
+    document.getElementById("loginContainer").style.display="none";
+    document.getElementById("profileBtn").style.display="inline";
+    document.getElementById("profileBtn").innerText = user.displayName;
+document.getElementById("logoutBtn").style.display = "inline";
+loadCartFromDB();
+loadProducts();
+} else {
+  currentUser = null;
+  document.getElementById("loginContainer").style.display="block";
+  document.getElementById("profileBtn").style.display="none";
+  document.getElementById("logoutBtn").style.display="none";
+  cart = [];
+  document.getElementById("cartCount").innerText = 0;
+  showHome();
+}
+});
 
-let cart = [];
-
-function renderProducts(filtered = null){
-  const list=document.getElementById('productList');
-  list.innerHTML="";
-  const displayProducts = filtered || products;
-  displayProducts.forEach(p=>{
-    list.innerHTML+=`
-      <div class="product">
-        <img src="${p.img}" alt="${p.name}">
-        <h3>${p.name}</h3>
-        <p>${p.price} Tk</p>
-        <div class="product-buttons">
-          <button onclick="addToCart(${p.id})">Add to Cart</button>
-          <button onclick="openModal([products.find(pr=>pr.id===${p.id})])">Order Now</button>
-        </div>
-      </div>
-    `;
+// Load Cart from Firebase
+function loadCartFromDB(){
+  if(!currentUser) return;
+  db.collection("carts").doc(currentUser.uid).get().then(cartDoc=>{
+    cart = cartDoc.exists ? cartDoc.data().items : [];
+    document.getElementById("cartCount").innerText=cart.length;
   });
 }
 
-function searchProducts(){
-  const query = document.getElementById('searchInput').value.toLowerCase();
-  const filtered = products.filter(p => p.name.toLowerCase().includes(query));
-  renderProducts(filtered);
-}
-
+// Add to Cart
 function addToCart(id){
-  if(!currentUser){ alert("Please login to add to cart!"); return; }
-  const prod = products.find(p=>p.id===id);
-  cart.push(prod);
-  updateCartCount();
-  saveCart();
-}
-
-function updateCartCount(){
-  document.getElementById("cartCount").innerText=cart.length;
-}
-
-function saveCart(){
-  if(currentUser){
-    db.collection("carts").doc(currentUser.uid).set({items:cart})
-    .catch(err=>console.log(err));
-  }
-}
-
-function loadCart(){
-  if(currentUser){
-    db.collection("carts").doc(currentUser.uid).get()
-    .then(doc=>{
-      if(doc.exists){ cart = doc.data().items || []; }
-      else { cart = []; }
-      updateCartCount();
+  if(!currentUser){alert("Login করতে হবে!"); return;}
+  db.collection("products").doc(id).get().then(doc=>{
+    const prod = {id: doc.id, ...doc.data()};
+    db.collection("carts").doc(currentUser.uid).get().then(cartDoc=>{
+      let userCart = cartDoc.exists ? cartDoc.data().items : [];
+      userCart.push(prod);
+      db.collection("carts").doc(currentUser.uid).set({items:userCart}).then(()=>{
+        cart = userCart;
+        document.getElementById("cartCount").innerText=cart.length;
+        alert(prod.name+" added to cart");
+      });
     });
-  }
+  });
 }
 
+// Show/Hide Pages
 function showHome(){
   document.getElementById('productList').style.display="grid";
   document.querySelector('.slider').style.display="flex";
   document.querySelector('.search-bar').style.display="block";
   document.getElementById('cartPage').style.display="none";
 }
-
 function showCart(){
-  if(!currentUser){ alert("Please login to view cart!"); return; }
+  if(!currentUser){alert("Login করতে হবে!"); return;}
   document.getElementById('productList').style.display="none";
   document.querySelector('.slider').style.display="none";
   document.querySelector('.search-bar').style.display="none";
@@ -273,16 +210,19 @@ function showCart(){
     `;
   });
 }
-
 function removeFromCart(i){
+  if(!currentUser) return;
   cart.splice(i,1);
-  updateCartCount();
-  saveCart();
-  showCart();
+  db.collection("carts").doc(currentUser.uid).set({items:cart}).then(()=>{
+    document.getElementById("cartCount").innerText=cart.length;
+    showCart();
+  });
 }
 
+// Order Modal
+let currentOrder=[];
 function checkout(){
-  if(!currentUser){ alert("Please login to place order!"); return; }
+  if(!currentUser){alert("Login করতে হবে!"); return;}
   const selected = [];
   cart.forEach((c,i)=>{
     if(document.getElementById(`select_${i}`).checked) selected.push(c);
@@ -290,8 +230,6 @@ function checkout(){
   if(selected.length===0){alert("Select at least one product!"); return;}
   openModal(selected);
 }
-
-let currentOrder=[];
 function openModal(selected=null){
   currentOrder = selected || cart;
   document.getElementById('orderModal').style.display='block';
@@ -299,16 +237,15 @@ function openModal(selected=null){
     <div class="order-product">
       <span>${p.name} - ${p.price} Tk</span>
       <div>
-        <button type="button" onclick="changeQty(${p.id}, -1)">-</button>
+        <button type="button" onclick="changeQty('${p.id}', -1)">-</button>
         <input type="number" min="1" value="1" class="order-qty" data-id="${p.id}" onchange="updateTotal()" style="width:40px;text-align:center;">
-        <button type="button" onclick="changeQty(${p.id}, 1)">+</button>
+        <button type="button" onclick="changeQty('${p.id}', 1)">+</button>
       </div>
     </div>
   `).join('');
   document.getElementById('orderSummary').innerHTML = summary;
   updateTotal();
 }
-
 function changeQty(id, delta){
   const inp = document.querySelector(`.order-qty[data-id='${id}']`);
   let val = parseInt(inp.value) + delta;
@@ -316,21 +253,16 @@ function changeQty(id, delta){
   inp.value=val;
   updateTotal();
 }
-
 function updateTotal(){
   const qtyInputs = document.querySelectorAll(".order-qty");
   let total = 0;
   qtyInputs.forEach(inp=>{
-    const prod = products.find(p=>p.id==inp.dataset.id);
+    const prod = currentOrder.find(p=>p.id==inp.dataset.id);
     total += prod.price * parseInt(inp.value);
   });
   document.getElementById("totalPrice").innerText = total;
 }
-
-function closeModal(){
-  document.getElementById('orderModal').style.display='none';
-}
-
+function closeModal(){document.getElementById('orderModal').style.display='none';}
 function togglePaymentField(){
   const method=document.getElementById("payment").value;
   if(method=="bkash" || method=="nagad"){
@@ -341,32 +273,41 @@ function togglePaymentField(){
     document.getElementById("paymentNumber").classList.add("hidden");
   }
 }
-
 function submitOrder(e){
   e.preventDefault();
-  if(!currentUser){ alert("Login first!"); return; }
-  const orderData = {
+  const name = document.getElementById("name").value;
+  const address = document.getElementById("address").value;
+  const mobile = document.getElementById("mobile").value;
+  const payment = document.getElementById("payment").value;
+  const transactionId = document.getElementById("paymentNumber").value;
+  const orderItems = currentOrder.map(p=>{
+    const qty = parseInt(document.querySelector(`.order-qty[data-id='${p.id}']`).value);
+    return {...p, qty};
+  });
+  db.collection("orders").add({
     userId: currentUser.uid,
-    items: currentOrder.map((p,i)=>({id:p.id,name:p.name,price:p.price,qty:parseInt(document.querySelector(`.order-qty[data-id='${p.id}']`).value)})),
-    total: parseInt(document.getElementById("totalPrice").innerText),
-    name: document.getElementById("name").value,
-    address: document.getElementById("address").value,
-    mobile: document.getElementById("mobile").value,
-    paymentMethod: document.getElementById("payment").value,
-    transactionID: document.getElementById("paymentNumber").value,
-    timestamp: new Date()
-  };
-  db.collection("orders").add(orderData).then(()=>{
+    name, address, mobile, payment, transactionId,
+    items: orderItems,
+    total: orderItems.reduce((a,b)=>a+b.price*b.qty,0),
+    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+  }).then(()=>{
     alert("Order Placed Successfully!");
     cart = [];
-    updateCartCount();
-    saveCart();
+    db.collection("carts").doc(currentUser.uid).set({items:cart});
+    document.getElementById("cartCount").innerText=0;
     closeModal();
     showHome();
-  }).catch(err=>alert(err.message));
+  });
 }
 
-renderProducts();
+// Search Products
+function searchProducts(){
+  const query = document.getElementById("searchInput").value.toLowerCase();
+  loadProducts().then(()=>{
+    const filtered = cart.filter(p=>p.name.toLowerCase().includes(query));
+    loadProducts(filtered);
+  });
+}
 </script>
 </body>
 </html>
