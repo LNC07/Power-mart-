@@ -190,11 +190,11 @@ function loadSlider(products=null){
   let scrollAmount=0;
   setInterval(()=>{
     if(slider.scrollLeft + slider.clientWidth >= slider.scrollWidth){
-      slider.scrollLeft=1;
+      slider.scrollLeft=0;
     } else {
-      slider.scrollLeft += 1;
+      slider.scrollLeft += 0;
     }
-  }, 20); // auto-scroll speed
+  }, 00); // auto-scroll speed
 }
 
 function orderSingle(data){
