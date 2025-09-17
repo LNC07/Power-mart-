@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Power Mart - Shopping</title>
+<style>
+body{margin:0;font-family:Arial,sans-serif;background:linear-gradient(135deg,#d4bfff,#b3dfff,#c2f0f0);min-height:100vh;color:#333;}
+header{background:rgba(255,255,255,0.9);color:#333;padding:15px;display:flex;justify-content:space-between;align-items:center;position:sticky;top:0;z-index:10;border-bottom:2px solid #a0d4ff;}
+header h1{margin:0;font-size:24px;color:#333;}
+nav a, #profileBtn, #logoutBtn, #loginBtn{margin:0 10px;text-decoration:none;font-weight:bold;cursor:pointer;}
+nav a:hover, #profileBtn:hover, #logoutBtn:hover, #loginBtn:hover{color:#6ca0ff;}
+#logoutBtn{padding:6px 12px;font-size:14px;border-radius:8px;}
+.slider{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;background: rgba(255,255,255,0.3);padding:10px;border-radius:15px;margin:15px;scroll-behavior:smooth;}
+.slider img{width:100%;max-width:400px;height:200px;object-fit:cover;margin:5px;border-radius:15px;scroll-snap-align:start;transition: transform .3s;border:3px solid #fff;}
+.slider img:hover{transform:scale(1.05);border-color:#6ca0ff;}
+.search-bar{padding:10px;text-align:center;}
+.search-bar input{width:80%;padding:12px;border-radius:10px;border:2px solid #fff;font-size:16px;outline:none;transition:0.3s;}
+.search-bar input:focus{border-color:#6ca0ff;background:rgba(255,255,255,0.8);}
+.products{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:15px;padding:15px;}
+.product{background:#fff;border-radius:15px;box-shadow:0 8px 20px rgba(0,0,0,0.2);padding:10px;text-align:center;transition: transform .3s, box-shadow .3s;display:flex;flex-direction:column;justify-content:space-between;position:relative;min-height:360px;}
+.product:hover{transform:translateY(-5px);box-shadow:0 12px 25px rgba(0,0,0,0.3);}
+.product img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:12px;}
+.product h3{color:#333;margin:10px 0 5px 0;}
+.product p{font-weight:bold;color:#111;margin:5px 0;}
+.product .old-price{color:#888;text-decoration:line-through;font-size:14px;}
+.product .discount-price{color:#ff3b3b;font-weight:bold;font-size:14px;}
+.product-buttons{display:flex;flex-direction:column;gap:8px;margin-top:auto;}
+button{background: linear-gradient(45deg,#a0d4ff,#c2f0f0);color:#333;border:none;padding:10px 15px;margin-top:8px;border-radius:12px;cursor:pointer;font-weight:bold;transition:0.3s;}
+button:hover{background: linear-gradient(45deg,#b3dfff,#d4bfff);color:#333;}
+#cartPage{display:none;padding:20px;}
+#cartPage button:first-of-type{margin-bottom:10px;} 
+.cart-item{display:flex;align-items:center;justify-content:space-between;background:#fff;margin:10px 0;padding:10px;border-radius:12px;box-shadow:0 5px 15px rgba(0,0,0,0.2);}
+.cart-item img{width:60px;height:60px;object-fit:cover;border-radius:8px;margin-right:10px;}
+input, select{width:100%;padding:10px;margin:8px 0;border-radius:10px;border:2px solid #ccc;font-size:16px;outline:none;transition:0.3s;}
+input:focus, select:focus{border-color:#6ca0ff;}
+.hidden{display:none;}
+#transactionLabel{font-weight:bold;margin-top:10px;display:block;color:#6ca0ff;}
+.modal{display:none;position:fixed;z-index:100;left:0;top:0;width:100%;height:100%;overflow:auto;background: rgba(0,0,0,0.5);}
+.modal-content{background:#fff;margin:10% auto;padding:20px;border-radius:15px;width:90%;max-width:400px;box-shadow:0 10px 25px rgba(0,0,0,0.3);animation:fadeIn 0.5s;}
+.order-product{display:flex;justify-content:space-between;align-items:center;margin:8px 0;}
+.order-product div{display:flex;align-items:center;gap:5px;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(-50px);}to{opacity:1;transform:translateY(0);}}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Power Mart</h1>
+  <nav>
+    <a onclick="showHome()">Home</a>
+    <a onclick="showCart()">Cart 🛒 (<span id='cartCount'>0</span>)</a>
+    <span id="profileBtn" class="hidden"></span>
+    <button id="logoutBtn" class="hidden" onclick="logout()">Logout</button>
+    <button id="loginBtn" onclick="googleLogin()">Login with Google</button>
+  </nav>
+</header>
+
+<div class="slider" id="slider"></div>
+
+<div class="search-bar">
+  <input type="text" id="searchInput" placeholder="Search Products..." onkeyup="searchProducts()">
+</div>
+
+<div class="products" id="productList"></div>
+
+<div id="cartPage">
+  <h2>Your Cart</h2>
+  <button onclick="checkoutSelected()">Order Selected Products</button>
+  <div id="cartItems"></div>
+  <button onclick="showHome()">Back</button>
+</div>
+
+<div id="orderModal" class="modal">
+  <div class="modal-content">
+    <h2>Order Details</h2>
+    <div id="orderSummary"></div>
+    <p><strong>Total: <span id="totalPrice">0</span> Tk</strong></p>
+    <form onsubmit="submitOrder(event)">
+      <input type="text" id="name" placeholder="Your Name" required>
+      <input type="text" id="address" placeholder="Your Address" required>
+      <input type="text" id="mobile" placeholder="Mobile Number" required>
+      <select id="payment" onchange="togglePaymentField()" required>
+        <option value="">Select Payment Method</option>
+        <option value="cod">Cash on Delivery</option>
+        <option value="bkash">Bkash</option>
+        <option value="nagad">Nagad</option>
+      </select>
+      <label id="transactionLabel" class="hidden">Payment করে Transaction ID দিন:</label>
+      <input type="text" id="paymentNumber" class="hidden" placeholder="Enter Transaction ID">
+      <button type="submit">Confirm Order</button>
+      <button type="button" onclick="closeModal()">Cancel</button>
+    </form>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+
+<script>
+const firebaseConfig = {
+  apiKey: "AIzaSyB--N-R4ION_7YcxD9Uk60hFqsxZzNWcNE",
+  authDomain: "power-mart-15795.firebaseapp.com",
+  projectId: "power-mart-15795",
+  storageBucket: "power-mart-15795.appspot.com",
+  messagingSenderId: "381062091337",
+  appId: "1:381062091337:web:3c5c10093198fc20b4e598"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+let currentUser=null;
+let cart=[];
+
+auth.onAuthStateChanged(user=>{
+  if(user){
+    currentUser=user;
+    document.getElementById("loginBtn").classList.add("hidden");
+    document.getElementById("profileBtn").classList.remove("hidden");
+    document.getElementById("logoutBtn").classList.remove("hidden");
+    document.getElementById("profileBtn").innerText=user.displayName;
+    loadCart();
+    loadProducts();
+    loadSlider();
+  } else {
+    currentUser=null;
+    document.getElementById("loginBtn").classList.remove("hidden");
+    document.getElementById("profileBtn").classList.add("hidden");
+    document.getElementById("logoutBtn").classList.add("hidden");
+    cart=[];
+    renderProducts([]);
+    document.getElementById("slider").innerHTML="";
+  }
+});
+
+function googleLogin(){
+  const provider = new firebase.auth.GoogleAuthProvider();
+  auth.signInWithPopup(provider).then(res=>{
+    alert("Login Successful!");
+  });
+}
+
+function logout(){
+  auth.signOut();
+  cart=[];
+  showHome();
+}
+
+function loadProducts(filtered=null){
+  db.collection("products").get().then(snap=>{
+    const products=snap.docs.map(doc=>({id:doc.id,...doc.data()}));
+    if(filtered){
+      renderProducts(products.filter(p=>p.name.toLowerCase().includes(filtered)));
+    } else renderProducts(products);
+    loadSlider(products);
+  });
+}
+
+function renderProducts(products){
+  const list=document.getElementById("productList");
+  list.innerHTML="";
+  products.forEach(p=>{
+    const productData = encodeURIComponent(JSON.stringify(p));
+    list.innerHTML+=`
+      <div class="product">
+        <img src="${p.img}" alt="${p.name}">
+        <h3>${p.name}</h3>
+        <p class="price">${p.price} Tk</p>
+        ${p.oldPrice?`<p class="old-price">${p.oldPrice} Tk</p>`:''}
+        ${p.discountPrice?`<p class="discount-price">${p.discountPrice} Tk</p>`:''}
+        <div class="product-buttons">
+          <button onclick="addToCart('${p.id}')">Add to Cart</button>
+          <button onclick="orderSingle('${productData}')">Order Now</button>
+        </div>
+      </div>
+    `;
+  });
+}
+
+function loadSlider(products=null){
+  const slider=document.getElementById("slider");
+  slider.innerHTML="";
+  if(!products) return;
+  products.slice(0,5).forEach(p=>{
+    slider.innerHTML+=`<img src="${p.img}" alt="${p.name}">`;
+  });
+  slider.addEventListener('wheel', e => {
+    e.preventDefault();
+    slider.scrollLeft += e.deltaY;
+  });
+}
+
+function orderSingle(data){
+  if(!currentUser){alert("Please login to order"); return;}
+  const product = JSON.parse(decodeURIComponent(data));
+  openModal([product]);
+}
+
+function searchProducts(){
+  const query = document.getElementById("searchInput").value.toLowerCase();
+  loadProducts(query);
+}
+
+function addToCart(id){
+  if(!currentUser){alert("Please login to add to cart"); return;}
+  const prodRef=db.collection("products").doc(id);
+  prodRef.get().then(doc=>{
+    if(doc.exists){
+      const p=doc.data();
+      db.collection("carts").doc(currentUser.uid).collection("items").doc(id).set({...p, quantity:1},{merge:true});
+      alert(p.name+" added to cart");
+      loadCart();
+    }
+  });
+}
+
+function loadCart(){
+  if(!currentUser) return;
+  db.collection("carts").doc(currentUser.uid).collection("items").get().then(snap=>{
+    cart = snap.docs.map(doc=>({id:doc.id,...doc.data()}));
+    document.getElementById("cartCount").innerText=cart.length;
+  });
+}
+
+function showHome(){
+  document.getElementById("productList").style.display="grid";
+  document.getElementById("slider").style.display="flex";
+  document.querySelector(".search-bar").style.display="block";
+  document.getElementById("cartPage").style.display="none";
+}
+
+function showCart(){
+  if(!currentUser){alert("Please login to view cart"); return;}
+  document.getElementById("productList").style.display="none";
+  document.getElementById("slider").style.display="none";
+  document.querySelector(".search-bar").style.display="none";
+  document.getElementById("cartPage").style.display="block";
+
+  const items=document.getElementById("cartItems");
+  items.innerHTML="";
+  cart.forEach(c=>{
+    items.innerHTML+=`
+      <div class="cart-item">
+        <input type="checkbox" id="select_${c.id}" checked>
+        <img src="${c.img}">
+        <span>${c.name} - ${c.price} Tk</span>
+        <div>
+          <button onclick="removeFromCart('${c.id}')">Remove</button>
+        </div>
+      </div>
+    `;
+  });
+}
+
+function removeFromCart(id){
+  db.collection("carts").doc(currentUser.uid).collection("items").doc(id).delete().then(()=>loadCart());
+}
+
+function checkoutSelected(){
+  const selectedItems = cart.filter(c=>{
+    const checkbox = document.getElementById(`select_${c.id}`);
+    return checkbox && checkbox.checked;
+  });
+  if(selectedItems.length===0){alert("Select at least one product"); return;}
+  openModal(selectedItems);
+}
+
+let currentOrder=[];
+function openModal(selected=null){
+  if(!currentUser){alert("Please login to order"); return;}
+  currentOrder = selected || cart;
+  document.getElementById("orderModal").style.display='block';
+  const summary = currentOrder.map(p=>`
+    <div class="order-product">
+      <span>${p.name} - ${p.price} Tk</span>
+      <div>
+        <button type="button" onclick="changeQty('${p.id}', -1)">-</button>
+        <input type="number" min="1" value="${p.quantity||1}" class="order-qty" data-id="${p.id}" onchange="updateTotal()" style="width:40px;text-align:center;">
+        <button type="button" onclick="changeQty('${p.id}', 1)">+</button>
+      </div>
+    </div>
+  `).join('');
+  document.getElementById("orderSummary").innerHTML = summary;
+  updateTotal();
+}
+
+function changeQty(id, delta){
+  const inp = document.querySelector(`.order-qty[data-id='${id}']`);
+  let val = parseInt(inp.value) + delta;
+  if(val<1) val=1;
+  inp.value=val;
+  updateTotal();
+}
+
+function updateTotal(){
+  const qtyInputs = document.querySelectorAll(".order-qty");
+  let total=0;
+  qtyInputs.forEach(inp=>{
+    const prod = currentOrder.find(p=>p.id==inp.dataset.id);
+    total+=prod.price*parseInt(inp.value);
+  });
+  document.getElementById("totalPrice").innerText=total;
+}
+
+function closeModal(){
+  document.getElementById("orderModal").style.display='none';
+}
+
+function togglePaymentField(){
+  const method=document.getElementById("payment").value;
+  if(method=="bkash" || method=="nagad"){
+    document.getElementById("transactionLabel").classList.remove("hidden");
+    document.getElementById("paymentNumber").classList.remove("hidden");
+  } else {
+    document.getElementById("transactionLabel").classList.add("hidden");
+    document.getElementById("paymentNumber").classList.add("hidden");
+  }
+}
+
+function submitOrder(e){
+  e.preventDefault();
+  const orderData={
+    userId: currentUser.uid,
+    name: document.getElementById("name").value,
+    address: document.getElementById("address").value,
+    mobile: document.getElementById("mobile").value,
+    payment: document.getElementById("payment").value,
+    transaction: document.getElementById("paymentNumber").value || null,
+    items: currentOrder.map(p=>{
+      const qty = parseInt(document.querySelector(`.order-qty[data-id='${p.id}']`).value);
+      return {...p, quantity: qty};
+    }),
+    total: parseInt(document.getElementById("totalPrice").innerText),
+    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+  };
+  db.collection("orders").add(orderData).then(()=>{
+    alert("Order Placed Successfully!");
+    currentOrder.forEach(p=>{
+      db.collection("carts").doc(currentUser.uid).collection("items").doc(p.id).delete();
+    });
+    loadCart();
+    closeModal();
+    showHome();
+  });
+}
+</script>
+</body>
+</html>
