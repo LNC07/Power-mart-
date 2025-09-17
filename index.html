@@ -180,22 +180,31 @@ function renderProducts(products){
 }
 
 // Slider auto scroll & dynamic
-function loadSlider(products=null){
-  const slider=document.getElementById("slider");
-  slider.innerHTML="";
-  if(!products) return;
-  products.slice(0,5).forEach(p=>{
-    slider.innerHTML+=`<img src="${p.img}" alt="${p.name}">`;
-  });
-  let scrollAmount=0;
-  setInterval(()=>{
-    if(slider.scrollLeft + slider.clientWidth >= slider.scrollWidth){
-      slider.scrollLeft=0;
-    } else {
-      slider.scrollLeft += 1;
+function startSliderAutoScroll() {
+  const slider = document.querySelector(".slider");
+  let scrollAmount = 0;
+  let scrollStep = 1; // pixel per interval
+  let maxScroll = slider.scrollWidth - slider.clientWidth;
+
+  function scroll() {
+    scrollAmount += scrollStep;
+    if (scrollAmount > maxScroll) {
+      scrollAmount = 0; // Reset to start
     }
-  }, 30); // auto-scroll speed
+    slider.scrollTo({
+      left: scrollAmount,
+      behavior: 'smooth'
+    });
+    requestAnimationFrame(scroll); // smoother animation
+  }
+
+  scroll(); // start scrolling
 }
+
+// Call this function after the page loads
+window.addEventListener("load", () => {
+  startSliderAutoScroll();
+});
 
 function orderSingle(data){
   if(!currentUser){alert("Please login to order"); return;}
