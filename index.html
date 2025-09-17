@@ -26,6 +26,7 @@ nav a:hover, #profileBtn:hover, #logoutBtn:hover, #loginBtn:hover{color:#6ca0ff;
 .product-buttons button{width:100%;}
 button{background: linear-gradient(45deg,#a0d4ff,#c2f0f0);color:#333;border:none;padding:10px 15px;margin-top:8px;border-radius:12px;cursor:pointer;font-weight:bold;transition:0.3s;}
 button:hover{background: linear-gradient(45deg,#b3dfff,#d4bfff);color:#333;}
+#logoutBtn{font-size:14px;padding:6px 10px;} /* Logout button choto kora */
 #cartPage{display:none;padding:20px;}
 #cartPage button:first-of-type{margin-bottom:10px;} 
 .cart-item{display:flex;align-items:center;justify-content:space-between;background:#fff;margin:10px 0;padding:10px;border-radius:12px;box-shadow:0 5px 15px rgba(0,0,0,0.2);}
@@ -162,6 +163,7 @@ function loadProducts(filtered=null){
     });
 }
 
+// Order Now button fix
 function renderProducts(products){
     const list = document.getElementById("productList");
     list.innerHTML = "";
@@ -173,7 +175,7 @@ function renderProducts(products){
             <p>${p.price} Tk</p>
             <div class="product-buttons">
                 <button onclick="addToCart('${p.id}')">Add to Cart</button>
-                <button onclick="openModal([${JSON.stringify(p)}])">Order Now</button>
+                <button onclick="openModal([ '${p.id}' ])">Order Now</button>
             </div>
         </div>
         `;
@@ -243,9 +245,13 @@ function removeFromCart(id){
 
 // Orders
 let currentOrder=[];
-function openModal(selected=null){
+function openModal(selectedIds=null){
   if(!currentUser){ alert("Please login to order"); return; }
-  currentOrder = selected || cart;
+  if(selectedIds){
+    currentOrder = cart.filter(p=>selectedIds.includes(p.id));
+  } else {
+    currentOrder = cart;
+  }
   document.getElementById("orderModal").style.display='block';
   const summary = currentOrder.map(p=>`
     <div class="order-product">
