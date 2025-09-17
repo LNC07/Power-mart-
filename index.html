@@ -76,12 +76,9 @@ input:focus, select:focus {border-color:#6ca0ff;}
 .modal-content {background:#fff;margin:10% auto;padding:20px;border-radius:15px;width:90%;max-width:400px;box-shadow:0 10px 25px rgba(0,0,0,0.3);animation:fadeIn 0.5s;}
 .order-product {display:flex;justify-content:space-between;align-items:center;margin:8px 0;}
 .order-product div {display:flex;align-items:center;gap:5px;}
+#loginBtn {background:#ffb6c1;color:#fff;font-weight:bold;}
 @keyframes fadeIn {from {opacity:0; transform:translateY(-50px);} to {opacity:1; transform:translateY(0);}}
 </style>
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 </head>
 <body>
 
@@ -90,8 +87,9 @@ input:focus, select:focus {border-color:#6ca0ff;}
   <nav>
     <a onclick="showHome()">Home</a>
     <a onclick="showCart()">Cart 🛒 (<span id='cartCount'>0</span>)</a>
-    <a id="profileBtn" onclick="showProfile()" style="display:none;">Profile</a>
-    <a id="loginBtn" onclick="googleLogin()">Login</a>
+    <a id="profileBtn" style="display:none;"></a>
+    <button id="loginBtn" onclick="login()">Login with Google</button>
+    <button id="logoutBtn" style="display:none;" onclick="logout()">Log Out</button>
   </nav>
 </header>
 
@@ -137,6 +135,11 @@ input:focus, select:focus {border-color:#6ca0ff;}
   </div>
 </div>
 
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
 <script>
 const firebaseConfig = {
   apiKey: "AIzaSyB--N-R4ION_7YcxD9Uk60hFqsxZzNWcNE",
@@ -150,33 +153,31 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
+let currentUser = null;
 
 auth.onAuthStateChanged(user=>{
+  currentUser = user;
   if(user){
     document.getElementById("loginBtn").style.display="none";
-    document.getElementById("profileBtn").style.display="inline";
-  }else{
-    document.getElementById("loginBtn").style.display="inline";
+    document.getElementById("logoutBtn").style.display="inline-block";
+    document.getElementById("profileBtn").style.display="inline-block";
+    document.getElementById("profileBtn").innerText=user.displayName;
+    loadCart();
+  } else {
+    document.getElementById("loginBtn").style.display="inline-block";
+    document.getElementById("logoutBtn").style.display="none";
     document.getElementById("profileBtn").style.display="none";
+    cart = [];
+    updateCartCount();
   }
 });
 
-function googleLogin(){
+function login(){
   const provider = new firebase.auth.GoogleAuthProvider();
-  auth.signInWithPopup(provider).then(res=>{
-    alert("Login Successful!");
-  }).catch(err=>{
-    alert(err.message);
-  });
+  auth.signInWithPopup(provider).catch(err=>alert(err.message));
 }
-
-function showProfile(){
-  if(auth.currentUser){
-    const logout = confirm("Logout?");
-    if(logout){
-      auth.signOut();
-    }
-  }
+function logout(){
+  auth.signOut();
 }
 
 const products = [
@@ -214,11 +215,33 @@ function searchProducts(){
 }
 
 function addToCart(id){
-  if(!auth.currentUser){ alert("Please login to place an order!"); return; }
-  const prod=products.find(p=>p.id===id);
+  if(!currentUser){ alert("Please login to add to cart!"); return; }
+  const prod = products.find(p=>p.id===id);
   cart.push(prod);
+  updateCartCount();
+  saveCart();
+}
+
+function updateCartCount(){
   document.getElementById("cartCount").innerText=cart.length;
-  alert(prod.name+" added to cart");
+}
+
+function saveCart(){
+  if(currentUser){
+    db.collection("carts").doc(currentUser.uid).set({items:cart})
+    .catch(err=>console.log(err));
+  }
+}
+
+function loadCart(){
+  if(currentUser){
+    db.collection("carts").doc(currentUser.uid).get()
+    .then(doc=>{
+      if(doc.exists){ cart = doc.data().items || []; }
+      else { cart = []; }
+      updateCartCount();
+    });
+  }
 }
 
 function showHome(){
@@ -229,7 +252,7 @@ function showHome(){
 }
 
 function showCart(){
-  if(!auth.currentUser){ alert("Please login to view cart!"); return; }
+  if(!currentUser){ alert("Please login to view cart!"); return; }
   document.getElementById('productList').style.display="none";
   document.querySelector('.slider').style.display="none";
   document.querySelector('.search-bar').style.display="none";
@@ -253,12 +276,13 @@ function showCart(){
 
 function removeFromCart(i){
   cart.splice(i,1);
-  document.getElementById("cartCount").innerText=cart.length;
+  updateCartCount();
+  saveCart();
   showCart();
 }
 
 function checkout(){
-  if(!auth.currentUser){ alert("Please login to place an order!"); return; }
+  if(!currentUser){ alert("Please login to place order!"); return; }
   const selected = [];
   cart.forEach((c,i)=>{
     if(document.getElementById(`select_${i}`).checked) selected.push(c);
@@ -269,7 +293,6 @@ function checkout(){
 
 let currentOrder=[];
 function openModal(selected=null){
-  if(!auth.currentUser){ alert("Please login to place an order!"); return; }
   currentOrder = selected || cart;
   document.getElementById('orderModal').style.display='block';
   const summary = currentOrder.map(p=>`
@@ -321,32 +344,26 @@ function togglePaymentField(){
 
 function submitOrder(e){
   e.preventDefault();
-  const name=document.getElementById("name").value;
-  const address=document.getElementById("address").value;
-  const mobile=document.getElementById("mobile").value;
-  const payment=document.getElementById("payment").value;
-  const transaction=document.getElementById("paymentNumber").value;
-  
-  const order = {
-    user: auth.currentUser.displayName,
-    products: currentOrder.map(p=>{
-      const qty = parseInt(document.querySelector(`.order-qty[data-id='${p.id}']`).value);
-      return {name:p.name, price:p.price, quantity:qty};
-    }),
+  if(!currentUser){ alert("Login first!"); return; }
+  const orderData = {
+    userId: currentUser.uid,
+    items: currentOrder.map((p,i)=>({id:p.id,name:p.name,price:p.price,qty:parseInt(document.querySelector(`.order-qty[data-id='${p.id}']`).value)})),
     total: parseInt(document.getElementById("totalPrice").innerText),
-    name,address,mobile,payment,transaction,
+    name: document.getElementById("name").value,
+    address: document.getElementById("address").value,
+    mobile: document.getElementById("mobile").value,
+    paymentMethod: document.getElementById("payment").value,
+    transactionID: document.getElementById("paymentNumber").value,
     timestamp: new Date()
   };
-
-  db.collection("orders").add(order).then(()=>{
+  db.collection("orders").add(orderData).then(()=>{
     alert("Order Placed Successfully!");
     cart = [];
-    document.getElementById("cartCount").innerText=cart.length;
+    updateCartCount();
+    saveCart();
     closeModal();
     showHome();
-  }).catch(err=>{
-    alert("Error placing order: "+err.message);
-  });
+  }).catch(err=>alert(err.message));
 }
 
 renderProducts();
