@@ -153,7 +153,7 @@ function logout(){
     showHome();
 }
 
-// Products
+// Load Products
 function loadProducts(filtered=null){
     db.collection("products").get().then(snap=>{
         const products = snap.docs.map(doc=>({id:doc.id,...doc.data()}));
@@ -163,19 +163,21 @@ function loadProducts(filtered=null){
     });
 }
 
-// Order Now button fix
 function renderProducts(products){
     const list = document.getElementById("productList");
     list.innerHTML = "";
     products.forEach(p=>{
+        const price = p.price || 0;
+        const img = p.img || "https://via.placeholder.com/200x150?text=No+Image";
+        const name = p.name || "Unnamed Product";
         list.innerHTML += `
         <div class="product">
-            <img src="${p.img}" alt="${p.name}">
-            <h3>${p.name}</h3>
-            <p>${p.price} Tk</p>
+            <img src="${img}" alt="${name}">
+            <h3>${name}</h3>
+            <p>${price} Tk</p>
             <div class="product-buttons">
                 <button onclick="addToCart('${p.id}')">Add to Cart</button>
-                <button onclick="openModal([ '${p.id}' ])">Order Now</button>
+                <button onclick="openModal([${JSON.stringify(p)}])">Order Now</button>
             </div>
         </div>
         `;
@@ -187,11 +189,10 @@ function searchProducts(){
     loadProducts(query);
 }
 
-// Cart
+// Cart Functions
 function addToCart(id){
   if(!currentUser){ alert("Please login to add to cart"); return; }
-  const prodRef = db.collection("products").doc(id);
-  prodRef.get().then(doc=>{
+  db.collection("products").doc(id).get().then(doc=>{
     if(doc.exists){
       const p = doc.data();
       db.collection("carts").doc(currentUser.uid).collection("items").doc(id).set({...p, quantity:1},{merge:true});
@@ -245,13 +246,9 @@ function removeFromCart(id){
 
 // Orders
 let currentOrder=[];
-function openModal(selectedIds=null){
+function openModal(selected=null){
   if(!currentUser){ alert("Please login to order"); return; }
-  if(selectedIds){
-    currentOrder = cart.filter(p=>selectedIds.includes(p.id));
-  } else {
-    currentOrder = cart;
-  }
+  currentOrder = selected || cart;
   document.getElementById("orderModal").style.display='block';
   const summary = currentOrder.map(p=>`
     <div class="order-product">
@@ -279,7 +276,7 @@ function updateTotal(){
   const qtyInputs = document.querySelectorAll(".order-qty");
   let total=0;
   qtyInputs.forEach(inp=>{
-    const c=cart.find(p=>p.id==inp.dataset.id);
+    const c=cart.find(p=>p.id==inp.dataset.id) || currentOrder.find(p=>p.id==inp.dataset.id);
     total+=c.price*parseInt(inp.value);
   });
   document.getElementById("totalPrice").innerText=total;
